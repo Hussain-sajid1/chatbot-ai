@@ -1,8 +1,8 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 import requests
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../templates")
 
 API_KEY = os.environ.get("OPENROUTER_API_KEY")
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -33,6 +33,11 @@ def chat():
         return jsonify({"reply": bot_reply})
     except Exception as e:
         return jsonify({"reply": f"Error: {str(e)}"})
+
+# For static files (css, js, etc.) if needed
+@app.route('/templates/<path:filename>')
+def serve_static(filename):
+    return send_from_directory('../templates', filename)
 
 # For Vercel Python serverless
 app = app 
