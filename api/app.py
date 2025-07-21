@@ -5,7 +5,8 @@ import os
 app = Flask(__name__, template_folder="../templates")
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or "AIzaSyBxhA5g1eEUVyFG7h8ApIbK32ZZb0o-9Ts"
-GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
+# Use the latest Gemini endpoint (v1, not v1beta)
+GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
 
 @app.route("/")
 def index():
@@ -25,8 +26,13 @@ def chat():
     try:
         response = requests.post(GEMINI_API_URL, headers=headers, json=payload)
         data = response.json()
-        # Gemini's response structure
-        bot_reply = data["candidates"][0]["content"]["parts"][0]["text"]
+        print("GEMINI RAW RESPONSE:", data)
+        if "candidates" in data and data["candidates"]:
+            bot_reply = data["candidates"][0]["content"]["parts"][0]["text"]
+        elif "error" in data:
+            bot_reply = f"Gemini API error: {data['error'].get('message', str(data['error']))}"
+        else:
+            bot_reply = f"Unexpected Gemini response: {data}"
         return jsonify({"reply": bot_reply})
     except Exception as e:
         return jsonify({"reply": f"Error: {str(e)}"})
