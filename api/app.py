@@ -4,9 +4,8 @@ import os
 
 app = Flask(__name__, template_folder="../templates")
 
-API_KEY = os.environ.get("OPENROUTER_API_KEY")
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "deepseek/deepseek-r1-distill-llama-70b:free"
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or "AIzaSyBxhA5g1eEUVyFG7h8ApIbK32ZZb0o-9Ts"
+GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
 
 @app.route("/")
 def index():
@@ -16,25 +15,22 @@ def index():
 def chat():
     user_message = request.json.get("message")
     headers = {
-        "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
     }
     payload = {
-        "model": MODEL,
-        "messages": [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": user_message}
+        "contents": [
+            {"parts": [{"text": user_message}]}
         ]
     }
     try:
-        response = requests.post(API_URL, headers=headers, json=payload)
+        response = requests.post(GEMINI_API_URL, headers=headers, json=payload)
         data = response.json()
-        bot_reply = data["choices"][0]["message"]["content"]
+        # Gemini's response structure
+        bot_reply = data["candidates"][0]["content"]["parts"][0]["text"]
         return jsonify({"reply": bot_reply})
     except Exception as e:
         return jsonify({"reply": f"Error: {str(e)}"})
 
-# For static files (css, js, etc.) if needed
 @app.route('/templates/<path:filename>')
 def serve_static(filename):
     return send_from_directory('../templates', filename)
